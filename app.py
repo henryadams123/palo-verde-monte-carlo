@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="WECC Power Price Risk Model", layout="wide")
 
@@ -49,7 +50,6 @@ col4.metric("Max Final Price", f"${np.min([np.max(final_prices), 9999]):.0f}/MWh
 fig, axes = plt.subplots(1, 3, figsize=(16, 4))
 time_axis = np.linspace(0, days, n_steps + 1)
 
-# Price paths
 for i in range(200):
     axes[0].plot(time_axis, price_paths[i], alpha=0.1, linewidth=0.5, color="steelblue")
 axes[0].axhline(y=K, color="red", linestyle="--", linewidth=1.5, label=f"Strike ${K:.0f}")
@@ -60,7 +60,6 @@ axes[0].set_ylabel("Price ($/MWh)")
 axes[0].set_ylim(0, S * 8)
 axes[0].legend()
 
-# Final price distribution
 capped = np.clip(final_prices, 0, S * 8)
 axes[1].hist(capped, bins=80, color="steelblue", edgecolor="white", alpha=0.8)
 axes[1].axvline(x=K, color="red", linestyle="--", linewidth=1.5, label=f"Strike ${K:.0f}")
@@ -69,7 +68,6 @@ axes[1].set_title("Final Price Distribution")
 axes[1].set_xlabel("Price ($/MWh)")
 axes[1].legend()
 
-# Payoff distribution
 nonzero = payoffs[payoffs > 0]
 if len(nonzero) > 0:
     axes[2].hist(nonzero, bins=60, color="darkorange", edgecolor="white", alpha=0.8)
@@ -87,8 +85,6 @@ st.pyplot(fig)
 # ── 3D SURFACE PLOT ──────────────────────────────────────
 st.subheader("Option Price Surface — Volatility vs Stock Price")
 
-import plotly.graph_objects as go
-
 price_range = np.linspace(S * 0.5, S * 2.0, 40)
 vol_range = np.linspace(0.10, 5.0, 40)
 price_grid, vol_grid = np.meshgrid(price_range, vol_range)
@@ -100,27 +96,33 @@ def bs_call(s, k, t, r, sig):
 
 price_surface = bs_call(price_grid, K, T, r, vol_grid)
 
-fig3d = go.Figure(data=[go.Surface(
-    x=price_range,
-    y=vol_range,
-    z=price_surface,
-    colorscale="Viridis",
-    colorbar=dict(title="Option Price ($/MWh)")
-)])
-
-fig3d = go.Figure(data=[go.Surface(
-    x=price_range,
-    y=vol_range,
-    z=price_surface,
-    colorscale="Viridis",
-    colorbar=dict(title="Option Price ($/MWh)"),
-    contours=dict(
-        x=dict(show=True, color="white", width=1),
-        y=dict(show=True, color="white", width=1),
-        z=dict(show=True, color="white", width=1)
+fig3d = go.Figure(data=[
+    go.Surface(
+        x=price_range,
+        y=vol_range,
+        z=price_surface,
+        colorscale="Viridis",
+        colorbar=dict(title="Option Price ($/MWh)"),
+        contours=dict(
+            x=dict(show=True, color="white", width=1),
+            y=dict(show=True, color="white", width=1),
+            z=dict(show=True, color="white", width=1)
+        ),
+        opacity=0.75
     ),
-    opacity=0.85
-)])
+    go.Scatter3d(
+        x=price_grid.flatten(),
+        y=vol_grid.flatten(),
+        z=price_surface.flatten(),
+        mode="markers",
+        marker=dict(
+            size=2,
+            color=price_surface.flatten(),
+            colorscale="Viridis",
+            opacity=0.6
+        )
+    )
+])
 
 fig3d.update_layout(
     scene=dict(
