@@ -84,4 +84,41 @@ else:
 plt.tight_layout()
 st.pyplot(fig)
 
+# ── 3D SURFACE PLOT ──────────────────────────────────────
+st.subheader("Option Price Surface — Volatility vs Stock Price")
 
+import plotly.graph_objects as go
+
+price_range = np.linspace(S * 0.5, S * 2.0, 40)
+vol_range = np.linspace(0.10, 5.0, 40)
+price_grid, vol_grid = np.meshgrid(price_range, vol_range)
+
+def bs_call(s, k, t, r, sig):
+    d1 = (np.log(s / k) + (r + 0.5 * sig**2) * t) / (sig * np.sqrt(t))
+    d2 = d1 - sig * np.sqrt(t)
+    return s * stats.norm.cdf(d1) - k * np.exp(-r * t) * stats.norm.cdf(d2)
+
+price_surface = bs_call(price_grid, K, T, r, vol_grid)
+
+fig3d = go.Figure(data=[go.Surface(
+    x=price_range,
+    y=vol_range,
+    z=price_surface,
+    colorscale="Viridis",
+    colorbar=dict(title="Option Price ($/MWh)")
+)])
+
+fig3d.update_layout(
+    scene=dict(
+        xaxis_title="Stock Price ($/MWh)",
+        yaxis_title="Volatility",
+        zaxis_title="Option Price ($/MWh)",
+        bgcolor="rgba(0,0,0,0)"
+    ),
+    paper_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="white"),
+    height=600,
+    margin=dict(l=0, r=0, t=30, b=0)
+)
+
+st.plotly_chart(fig3d, use_container_width=True)
