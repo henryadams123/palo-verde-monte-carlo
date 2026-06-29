@@ -108,6 +108,20 @@ fig3d = go.Figure(data=[go.Surface(
     colorbar=dict(title="Option Price ($/MWh)")
 )])
 
+fig3d = go.Figure(data=[go.Surface(
+    x=price_range,
+    y=vol_range,
+    z=price_surface,
+    colorscale="Viridis",
+    colorbar=dict(title="Option Price ($/MWh)"),
+    contours=dict(
+        x=dict(show=True, color="white", width=1),
+        y=dict(show=True, color="white", width=1),
+        z=dict(show=True, color="white", width=1)
+    ),
+    opacity=0.85
+)])
+
 fig3d.update_layout(
     scene=dict(
         xaxis_title="Stock Price ($/MWh)",
